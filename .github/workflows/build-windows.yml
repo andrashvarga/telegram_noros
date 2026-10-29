@@ -32,6 +32,21 @@ jobs:
             exit 1
           fi
 
+      - name: Free disk space (Release Qt is huge).
+        shell: pwsh
+        run: |
+          $before = [math]::Round((Get-PSDrive C).Free/1GB,1)
+          $paths = @('C:\Android','C:\Program Files (x86)\Android','C:\Program Files\Android',
+            'C:\Program Files\Microsoft SQL Server','C:\Program Files (x86)\Microsoft SDKs\Azure',
+            'C:\Program Files\MongoDB','C:\Program Files\PostgreSQL','C:\Program Files\Google',
+            'C:\Program Files (x86)\Google','C:\Program Files\LLVM','C:\Strawberry','C:\Julia',
+            'C:\ghcup','C:\msys64','C:\Miniconda','C:\selenium','C:\Rust',
+            'C:\hostedtoolcache\windows\Java_Temurin-Hotspot_jdk','C:\hostedtoolcache\windows\go',
+            'C:\hostedtoolcache\windows\Ruby','C:\hostedtoolcache\windows\PyPy','C:\hostedtoolcache\windows\CodeQL')
+          foreach ($p in $paths) { if (Test-Path $p) { Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue } }
+          $after = [math]::Round((Get-PSDrive C).Free/1GB,1)
+          Write-Output "::notice title=disk::C: free before $before GB, after $after GB"
+
       - name: Prepare directories.
         run: |
           mkdir %userprofile%\TBuild\Libraries
