@@ -186,13 +186,15 @@ jobs:
         if: steps.build.outcome == 'failure'
         shell: bash
         run: |
+          set +e +o pipefail
           LOG="$GITHUB_WORKSPACE/build.log"
           echo "log lines: $(wc -l < "$LOG")"
-          # Keep API keys out of annotations.
-          grep -n -i -E "error|fatal|failed|cannot|unresolved|CMake Error" "$LOG" | sed -E 's/(TDESKTOP_API_(ID|HASH))=[^ ]*/\1=***/g' | head -25 | while IFS= read -r line; do
-            echo "::error title=build::${line:0:900}"
-          done
-          echo "::error title=tail::$(tail -n 12 "$LOG" | sed -E 's/(TDESKTOP_API_(ID|HASH))=[^ ]*/\1=***/g' | head -c 1800 | tr '\n' '|')"
+          MASK='s/(TDESKTOP_API_(ID|HASH))=[^ ]*/\1=***/g'
+          # Real compiler/linker errors only (no warnings, no CMake probe noise), last ones win.
+          grep -n -E ": (fatal )?error [A-Z]+[0-9]+|error LNK[0-9]+|FAILED:|CMake Error|MSBUILD : error|Build FAILED|: error:" "$LOG" | grep -v -E "LNK4099|warning|smartglocal_error|stripe_error|HAVE_|Performing Test" | sed -E "$MASK" | tail -n 12 | cut -c1-420 > /tmp/errs.txt
+          echo "::error title=build-errors::$(head -c 3800 /tmp/errs.txt | tr '\n' '|')"
+          echo "::error title=build-tail::$(tail -n 20 "$LOG" | sed -E "$MASK" | cut -c1-260 | head -c 3500 | tr '\n' '|')"
+          exit 0
 
       - name: Package portable.
         if: steps.build.outcome == 'success'
