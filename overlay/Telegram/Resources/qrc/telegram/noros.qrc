@@ -1,0 +1,44 @@
+<RCC>
+  <qresource prefix="/noros">
+    <file alias="icon_noros.png">../../noros/icon_noros.png</file>
+    <file alias="icon_noros_128.png">../../noros/icon_noros_128.png</file>
+    <file alias="icon_noros_16.png">../../noros/icon_noros_16.png</file>
+    <file alias="icon_noros_256.png">../../noros/icon_noros_256.png</file>
+    <file alias="icon_noros_32.png">../../noros/icon_noros_32.png</file>
+    <file alias="icon_noros_48.png">../../noros/icon_noros_48.png</file>
+    <file alias="icon_noros_512.png">../../noros/icon_noros_512.png</file>
+    <file alias="icon_noros_64.png">../../noros/icon_noros_64.png</file>
+    <file alias="icon_riopay.png">../../noros/icon_riopay.png</file>
+    <file alias="icon_riopay_128.png">../../noros/icon_riopay_128.png</file>
+    <file alias="icon_riopay_16.png">../../noros/icon_riopay_16.png</file>
+    <file alias="icon_riopay_256.png">../../noros/icon_riopay_256.png</file>
+    <file alias="icon_riopay_32.png">../../noros/icon_riopay_32.png</file>
+    <file alias="icon_riopay_48.png">../../noros/icon_riopay_48.png</file>
+    <file alias="icon_riopay_512.png">../../noros/icon_riopay_512.png</file>
+    <file alias="icon_riopay_64.png">../../noros/icon_riopay_64.png</file>
+    <file alias="icon_valutix.png">../../noros/icon_valutix.png</file>
+    <file alias="icon_valutix_128.png">../../noros/icon_valutix_128.png</file>
+    <file alias="icon_valutix_16.png">../../noros/icon_valutix_16.png</file>
+    <file alias="icon_valutix_256.png">../../noros/icon_valutix_256.png</file>
+    <file alias="icon_valutix_32.png">../../noros/icon_valutix_32.png</file>
+    <file alias="icon_valutix_48.png">../../noros/icon_valutix_48.png</file>
+    <file alias="icon_valutix_512.png">../../noros/icon_valutix_512.png</file>
+    <file alias="icon_valutix_64.png">../../noros/icon_valutix_64.png</file>
+    <file alias="logo_noros_ondark.png">../../noros/logo_noros_ondark.png</file>
+    <file alias="logo_noros_onlight.png">../../noros/logo_noros_onlight.png</file>
+    <file alias="logo_riopay_ondark.png">../../noros/logo_riopay_ondark.png</file>
+    <file alias="logo_riopay_onlight.png">../../noros/logo_riopay_onlight.png</file>
+    <file alias="logo_valutix_ondark.png">../../noros/logo_valutix_ondark.png</file>
+    <file alias="logo_valutix_onlight.png">../../noros/logo_valutix_onlight.png</file>
+    <file alias="themes/dark_glass.tdesktop-theme">../../noros/themes/dark_glass.tdesktop-theme</file>
+    <file alias="themes/dark_material.tdesktop-theme">../../noros/themes/dark_material.tdesktop-theme</file>
+    <file alias="themes/light_glass.tdesktop-theme">../../noros/themes/light_glass.tdesktop-theme</file>
+    <file alias="themes/light_material.tdesktop-theme">../../noros/themes/light_material.tdesktop-theme</file>
+    <file alias="themes/noros_glass.tdesktop-theme">../../noros/themes/noros_glass.tdesktop-theme</file>
+    <file alias="themes/noros_material.tdesktop-theme">../../noros/themes/noros_material.tdesktop-theme</file>
+    <file alias="themes/riopay_glass.tdesktop-theme">../../noros/themes/riopay_glass.tdesktop-theme</file>
+    <file alias="themes/riopay_material.tdesktop-theme">../../noros/themes/riopay_material.tdesktop-theme</file>
+    <file alias="themes/valutix_glass.tdesktop-theme">../../noros/themes/valutix_glass.tdesktop-theme</file>
+    <file alias="themes/valutix_material.tdesktop-theme">../../noros/themes/valutix_material.tdesktop-theme</file>
+  </qresource>
+</RCC>

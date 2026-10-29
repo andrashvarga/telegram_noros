@@ -1,0 +1,144 @@
+name: Build Noros portable (Windows x64)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+env:
+  # Upstream Telegram Desktop commit that noros.patch was written against.
+  UPSTREAM_REF: f985723b552b30fe1c17d377d57f44e61a15a8c4
+  PREPARE_PATH: "Telegram/build/prepare/prepare.py"
+
+jobs:
+  windows:
+    name: Windows x64 (portable exe)
+    runs-on: windows-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+      - name: Check API credentials.
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.TDESKTOP_API_ID }}" ] || [ -z "${{ secrets.TDESKTOP_API_HASH }}" ]; then
+            echo "Add repository secrets TDESKTOP_API_ID and TDESKTOP_API_HASH (from https://my.telegram.org/apps)."
+            exit 1
+          fi
+
+      - name: Prepare directories.
+        run: |
+          mkdir %userprofile%\TBuild\Libraries
+          mklink /d %GITHUB_WORKSPACE%\TBuild %userprofile%\TBuild
+          echo TBUILD=%GITHUB_WORKSPACE%\TBuild>>%GITHUB_ENV%
+          echo LibrariesPath=%GITHUB_WORKSPACE%\TBuild\Libraries\win64>>%GITHUB_ENV%
+          echo REPO_NAME=tdesktop>>%GITHUB_ENV%
+
+      - name: Clone upstream Telegram Desktop.
+        uses: actions/checkout@v4
+        with:
+          repository: telegramdesktop/tdesktop
+          ref: ${{ env.UPSTREAM_REF }}
+          submodules: recursive
+          path: ${{ env.TBUILD }}\tdesktop
+
+      - name: Clone fork files.
+        uses: actions/checkout@v4
+        with:
+          path: fork
+
+      - name: Apply Noros patch and overlay.
+        shell: bash
+        run: |
+          cd "$TBUILD/tdesktop"
+          git apply --whitespace=nowarn "$GITHUB_WORKSPACE/fork/noros.patch"
+          cp -rv "$GITHUB_WORKSPACE/fork/overlay/." .
+          test -f Telegram/SourceFiles/noros/noros_brand.cpp
+          test -f Telegram/Resources/noros/themes/riopay_glass.tdesktop-theme
+
+      - name: First set up.
+        shell: bash
+        run: |
+          DOCPATH=$TBUILD/$REPO_NAME/docs/building-win.md
+          SDK="$(grep "SDK version" $DOCPATH | sed -r 's/.*\*\*(.*)\*\* SDK version.*/\1/')"
+          echo "SDK=$SDK" >> $GITHUB_ENV
+          sed -i '/CMAKE_${lang}_FLAGS_DEBUG_INIT/s/${_Zi}//' "$PROGRAMFILES"/CMake/share/cmake*/Modules/Platform/Windows-MSVC.cmake
+          echo "$(sha256sum $TBUILD/$REPO_NAME/$PREPARE_PATH | awk '{ print $1 }')" >> CACHE_KEY.txt
+          echo "$SDK" >> CACHE_KEY.txt
+          echo "CACHE_KEY=$(sha256sum CACHE_KEY.txt | awk '{ print $1 }')" >> $GITHUB_ENV
+          git config --global user.email "you@example.com"
+          git config --global user.name "Sample"
+
+      - uses: Eden-CI/msvc-dev-cmd@master
+        name: Native Tools Command Prompt.
+        with:
+          arch: x64
+          sdk: ${{ env.SDK }}
+          toolset: "14.44"
+
+      - name: NuGet sources.
+        run: |
+          nuget sources Disable -Name "Microsoft Visual Studio Offline Packages"
+          nuget sources Add -Source https://api.nuget.org/v3/index.json & exit 0
+
+      - name: ThirdParty cache.
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TBUILD }}\ThirdParty
+          key: ${{ runner.OS }}-x64-third-party-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-third-party-
+
+      - name: Libraries cache.
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.LibrariesPath }}\*
+            !${{ env.LibrariesPath }}\cache_keys
+            !${{ env.LibrariesPath }}\[qQ]t[_-]*
+            ${{ env.LibrariesPath }}\cache_keys\*
+            !${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
+          key: ${{ runner.OS }}-x64-libs-v2-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-libs-v2-
+
+      - name: Qt cache.
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.LibrariesPath }}\[qQ]t[_-]*
+            ${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
+          key: ${{ runner.OS }}-x64-qt-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-qt-
+
+      - name: Libraries.
+        run: |
+          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat skip-release silent
+
+      - name: Free up some disk space.
+        shell: bash
+        run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' ')' -type f ')' -o -empty ')' -delete
+
+      - name: Noros build (Release, no autoupdate).
+        run: |
+          cd %TBUILD%\%REPO_NAME%\Telegram
+          call configure.bat x64 ^
+          -D TDESKTOP_API_ID=${{ secrets.TDESKTOP_API_ID }} ^
+          -D TDESKTOP_API_HASH=${{ secrets.TDESKTOP_API_HASH }} ^
+          -D CMAKE_CONFIGURATION_TYPES=Release ^
+          -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
+          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
+          cmake --build ..\out --config Release --parallel
+
+      - name: Package portable.
+        run: |
+          set OUT=%TBUILD%\%REPO_NAME%\out\Release
+          mkdir Noros-portable\tdata
+          copy %OUT%\Telegram.exe Noros-portable\Noros.exe
+
+      - uses: actions/upload-artifact@v4
+        name: Upload Noros-portable.
+        with:
+          name: Noros-portable-x64
+          path: Noros-portable\
+          retention-days: 30
