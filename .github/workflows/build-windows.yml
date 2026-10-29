@@ -103,8 +103,10 @@ jobs:
             !${{ env.LibrariesPath }}\[qQ]t[_-]*
             ${{ env.LibrariesPath }}\cache_keys\*
             !${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
-          key: ${{ runner.OS }}-x64-libs-v2-${{ env.CACHE_KEY }}
-          restore-keys: ${{ runner.OS }}-x64-libs-v2-
+          key: ${{ runner.OS }}-x64-libs-v3-${{ env.CACHE_KEY }}
+          restore-keys: |
+            ${{ runner.OS }}-x64-libs-v3-
+            ${{ runner.OS }}-x64-libs-v2-
 
       - name: Qt cache.
         uses: actions/cache@v4
@@ -112,12 +114,14 @@ jobs:
           path: |
             ${{ env.LibrariesPath }}\[qQ]t[_-]*
             ${{ env.LibrariesPath }}\cache_keys\[qQ]t[_-]*
-          key: ${{ runner.OS }}-x64-qt-${{ env.CACHE_KEY }}
-          restore-keys: ${{ runner.OS }}-x64-qt-
+          key: ${{ runner.OS }}-x64-qt-v3-${{ env.CACHE_KEY }}
+          restore-keys: |
+            ${{ runner.OS }}-x64-qt-v3-
+            ${{ runner.OS }}-x64-qt-
 
       - name: Libraries.
         run: |
-          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat skip-release silent
+          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat silent
 
       - name: Free up some disk space.
         shell: bash
