@@ -120,15 +120,31 @@ jobs:
             ${{ runner.OS }}-x64-qt-
 
       - name: Libraries.
+        id: libs
+        continue-on-error: true
         run: |
-          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat silent
+          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat silent > %GITHUB_WORKSPACE%\libs.log 2>&1
+          if errorlevel 1 exit /b 1
+
+      - name: Report library errors (annotations).
+        if: steps.libs.outcome == 'failure'
+        shell: bash
+        run: |
+          LOG="$GITHUB_WORKSPACE/libs.log"
+          echo "log lines: $(wc -l < "$LOG")"
+          grep -n -i -E "error|fatal|failed|cannot|not found|no such|denied|No space" "$LOG" | tail -n 25 | while IFS= read -r line; do
+            echo "::error title=libs::${line:0:900}"
+          done
+          echo "::error title=libs-tail::$(tail -n 25 "$LOG" | head -c 3000 | tr '\n' '|')"
 
       - name: Free up some disk space.
+        if: steps.libs.outcome == 'success'
         shell: bash
         run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/tdesktop_rust/out/*' ')' -type f ')' -o -empty ')' -delete
 
       - name: Noros build (Release, no autoupdate).
         id: build
+        if: steps.libs.outcome == 'success'
         continue-on-error: true
         run: |
           cd %TBUILD%\%REPO_NAME%\Telegram
