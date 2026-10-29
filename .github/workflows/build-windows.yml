@@ -132,10 +132,8 @@ jobs:
         run: |
           LOG="$GITHUB_WORKSPACE/libs.log"
           echo "log lines: $(wc -l < "$LOG")"
-          grep -n -i -E "error|fatal|failed|cannot|not found|no such|denied|No space" "$LOG" | tail -n 25 | while IFS= read -r line; do
-            echo "::error title=libs::${line:0:900}"
-          done
-          echo "::error title=libs-tail::$(tail -n 25 "$LOG" | head -c 3000 | tr '\n' '|')"
+          echo "::error title=libs-tail::$(tail -n 30 "$LOG" | cut -c1-220 | head -c 3500 | tr '\n' '|')"
+          echo "::error title=libs-errors::$(grep -n -E "error C[0-9]+|fatal error|FAILED:|CMake Error|Error:|exit code|ninja: build stopped|No space left|is not recognized|ModuleNotFound|Traceback" "$LOG" | grep -v "Structured output" | tail -n 8 | cut -c1-300 | head -c 3500 | tr '\n' '|')"
 
       - name: Free up some disk space.
         if: steps.libs.outcome == 'success'
