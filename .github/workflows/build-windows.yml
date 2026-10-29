@@ -61,6 +61,17 @@ jobs:
           cp -rv "$GITHUB_WORKSPACE/fork/overlay/." .
           test -f Telegram/SourceFiles/noros/noros_brand.cpp
           test -f Telegram/Resources/noros/themes/riopay_glass.tdesktop-theme
+          # dump_syms (debug-symbol tool) needs ATL for a newer toolset than the pinned one and is not needed here.
+          python3 - <<'PY'
+          import re
+          p = 'Telegram/build/prepare/prepare.py'
+          s = open(p, encoding='utf8').read()
+          lines = s.split('\n')
+          drop = [l for l in lines if re.search(r'tools\\\\windows\\\\dump_syms|gyp dump_syms\.gyp|msbuild -m dump_syms\.vcxproj', l)]
+          print('dropping', len(drop), 'dump_syms lines')
+          assert len(drop) == 3, drop
+          open(p, 'w', encoding='utf8', newline='').write('\n'.join(l for l in lines if l not in drop))
+          PY
 
       - name: First set up.
         shell: bash
@@ -81,20 +92,6 @@ jobs:
           arch: x64
           sdk: ${{ env.SDK }}
           toolset: "14.44"
-
-      - name: Locate ATL (needed by breakpad).
-        shell: bash
-        run: |
-          FOUND=$(find "/c/Program Files/Microsoft Visual Studio" "/c/Program Files (x86)/Microsoft Visual Studio" -iname atlbase.h 2>/dev/null | head -5)
-          echo "::notice title=atl::${FOUND//$'\n'/|}"
-          if [ -z "$FOUND" ]; then echo "::warning title=atl::atlbase.h not found anywhere"; exit 0; fi
-          # Prefer the newest toolset.
-          H=$(echo "$FOUND" | sort -V | tail -1)
-          INC=$(dirname "$H"); ROOT=$(dirname "$INC")
-          WININC=$(cygpath -w "$INC"); WINLIB=$(cygpath -w "$ROOT/lib/x64")
-          echo "INCLUDE=$WININC;$INCLUDE" >> $GITHUB_ENV
-          echo "LIB=$WINLIB;$LIB" >> $GITHUB_ENV
-          echo "::notice title=atl-set::$WININC ; $WINLIB"
 
       - name: NuGet sources.
         run: |
