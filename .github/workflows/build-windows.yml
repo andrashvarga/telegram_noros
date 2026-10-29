@@ -120,6 +120,8 @@ jobs:
         run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' ')' -type f ')' -o -empty ')' -delete
 
       - name: Noros build (Release, no autoupdate).
+        id: build
+        continue-on-error: true
         run: |
           cd %TBUILD%\%REPO_NAME%\Telegram
           call configure.bat x64 ^
@@ -127,10 +129,25 @@ jobs:
           -D TDESKTOP_API_HASH=${{ secrets.TDESKTOP_API_HASH }} ^
           -D CMAKE_CONFIGURATION_TYPES=Release ^
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
-          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
-          cmake --build ..\out --config Release --parallel
+          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON > %GITHUB_WORKSPACE%\build.log 2>&1
+          if errorlevel 1 exit /b 1
+          cmake --build ..\out --config Release --parallel >> %GITHUB_WORKSPACE%\build.log 2>&1
+          if errorlevel 1 exit /b 1
+
+      - name: Report build errors (annotations).
+        if: steps.build.outcome == 'failure'
+        shell: bash
+        run: |
+          LOG="$GITHUB_WORKSPACE/build.log"
+          echo "log lines: $(wc -l < "$LOG")"
+          # Keep API keys out of annotations.
+          grep -n -i -E "error|fatal|failed|cannot|unresolved|CMake Error" "$LOG" | sed -E 's/(TDESKTOP_API_(ID|HASH))=[^ ]*/\1=***/g' | head -25 | while IFS= read -r line; do
+            echo "::error title=build::${line:0:900}"
+          done
+          echo "::error title=tail::$(tail -n 12 "$LOG" | sed -E 's/(TDESKTOP_API_(ID|HASH))=[^ ]*/\1=***/g' | head -c 1800 | tr '\n' '|')"
 
       - name: Package portable.
+        if: steps.build.outcome == 'success'
         run: |
           set OUT=%TBUILD%\%REPO_NAME%\out\Release
           mkdir Noros-portable\tdata
@@ -138,6 +155,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         name: Upload Noros-portable.
+        if: steps.build.outcome == 'success'
         with:
           name: Noros-portable-x64
           path: Noros-portable\
