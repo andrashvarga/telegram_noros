@@ -104,6 +104,7 @@ void ApplyCurrentTheme() {
 class TitleLogo final : public Ui::RpWidget {
 public:
 	explicit TitleLogo(QWidget *parent) : RpWidget(parent) {
+		setObjectName(u"noros_title_logo"_q);
 		setAttribute(Qt::WA_TransparentForMouseEvents);
 		BrandChanges() | rpl::on_next([=] {
 			refresh();
@@ -279,7 +280,7 @@ rpl::producer<> BrandChanges() {
 }
 
 void AttachTitleLogo(not_null<QWidget*> title) {
-	if (title->findChild<TitleLogo*>(QString(), Qt::FindDirectChildrenOnly)) {
+	if (title->findChild<QWidget*>(u"noros_title_logo"_q, Qt::FindDirectChildrenOnly)) {
 		return;
 	}
 	Ui::CreateChild<TitleLogo>(title.get());
