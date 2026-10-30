@@ -187,7 +187,8 @@ jobs:
           -D TDESKTOP_API_HASH=${{ secrets.TDESKTOP_API_HASH }} ^
           -D CMAKE_CONFIGURATION_TYPES=Release ^
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
-          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON > %GITHUB_WORKSPACE%\build.log 2>&1
+          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON ^
+          -D DESKTOP_APP_ENABLE_LTO=OFF > %GITHUB_WORKSPACE%\build.log 2>&1
           if errorlevel 1 exit /b 1
           python %GITHUB_WORKSPACE%\fork\nopch.py ..\out\Telegram\Telegram.vcxproj >> %GITHUB_WORKSPACE%\build.log 2>&1
           if errorlevel 1 py -3 %GITHUB_WORKSPACE%\fork\nopch.py ..\out\Telegram\Telegram.vcxproj >> %GITHUB_WORKSPACE%\build.log 2>&1
