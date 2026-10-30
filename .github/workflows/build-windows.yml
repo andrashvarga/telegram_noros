@@ -179,7 +179,7 @@ jobs:
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON ^
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON > %GITHUB_WORKSPACE%\build.log 2>&1
           if errorlevel 1 exit /b 1
-          cmake --build ..\out --config Release --parallel >> %GITHUB_WORKSPACE%\build.log 2>&1
+          cmake --build ..\out --config Release --parallel 2 -- /p:CL_MPCount=2 >> %GITHUB_WORKSPACE%\build.log 2>&1
           if errorlevel 1 exit /b 1
 
       - name: Report build errors (annotations).
