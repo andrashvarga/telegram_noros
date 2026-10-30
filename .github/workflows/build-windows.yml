@@ -42,6 +42,7 @@ jobs:
             'C:\Program Files (x86)\Google','C:\Program Files\LLVM','C:\Strawberry','C:\Julia',
             'C:\ghcup','C:\msys64','C:\Miniconda','C:\selenium','C:\Rust',
             'C:\hostedtoolcache\windows\Java_Temurin-Hotspot_jdk','C:\hostedtoolcache\windows\go',
+            'C:\Program Files\Microsoft Visual Studio\2022','C:\Program Files (x86)\Microsoft Visual Studio\2019',
             'C:\hostedtoolcache\windows\Ruby','C:\hostedtoolcache\windows\PyPy','C:\hostedtoolcache\windows\CodeQL')
           foreach ($p in $paths) { if (Test-Path $p) { Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue } }
           $after = [math]::Round((Get-PSDrive C).Free/1GB,1)
@@ -165,6 +166,15 @@ jobs:
         if: steps.libs.outcome == 'success'
         shell: bash
         run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/tdesktop_rust/out/*' ')' -type f ')' -o -empty ')' -delete
+
+      - name: Free Qt build trees and report free space.
+        if: steps.libs.outcome == 'success'
+        shell: pwsh
+        run: |
+          $b = [math]::Round((Get-PSDrive C).Free/1GB,1)
+          Get-ChildItem $env:LibrariesPath -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^qt_' } | ForEach-Object { Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
+          $a = [math]::Round((Get-PSDrive C).Free/1GB,1)
+          Write-Output "::notice title=disk-before-build::C: free $b GB -> $a GB after removing Qt build trees"
 
       - name: Noros build (Release, no autoupdate).
         id: build
